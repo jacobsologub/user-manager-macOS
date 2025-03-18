@@ -135,6 +135,30 @@ create_user() {
     # Create home directory
     createhomedir -c -u "$username" > /dev/null
     echo "Home directory created for $username"
+
+    # Prompt for SSH public key (optional)
+    read -p "Enter SSH public key to enable SSH access (or press Enter to skip): " ssh_key
+    if [ -n "$ssh_key" ]; then
+        # Define paths
+        user_home="/Users/$username"
+        ssh_dir="$user_home/.ssh"
+        authorized_keys="$ssh_dir/authorized_keys"
+
+        # Create .ssh directory with correct permissions
+        mkdir -p "$ssh_dir"
+        chmod 700 "$ssh_dir"
+        chown "$username:staff" "$ssh_dir"
+
+        # Create or append to authorized_keys with the provided key
+        echo "$ssh_key" >> "$authorized_keys"
+        chmod 600 "$authorized_keys"
+        chown "$username:staff" "$authorized_keys"
+
+        echo "SSH access enabled for '$username' with provided public key."
+    else
+        echo "SSH key setup skipped."
+    fi
+
     echo "User creation completed successfully!"
 }
 
