@@ -1,14 +1,16 @@
 # macOS User Manager Script
 
-A simple Bash script for managing users on macOS. This script allows you to create new users with optional admin privileges and delete existing users, including their home directories.
+A simple Bash script for managing users on macOS. This script allows you to create new users with optional admin privileges, specify a login shell, and delete existing users, including their home directories. Tested and functional on macOS versions supporting `sysadminctl`.
 
 ## Features
-- **Create User**: Prompts for username, full name, password, and admin status. Automatically assigns a unique UID and creates a home directory.
+- **Create User**: Prompts for username, full name, password, admin status, and login shell. Automatically assigns a unique UID and creates a home directory.
 - **Delete User**: Prompts for username, confirms deletion, and removes the user along with their home directory.
 - Command-line interface with `create` and `delete` options.
+- Shell selection from available shells listed in `/etc/shells`, with a default of `/bin/zsh` or the creating user's shell.
 
 ## Requirements
 - macOS system (tested on macOS versions supporting `sysadminctl`)
+- Bash shell (default on macOS)
 - Sudo privileges to run the script
 
 ## Installation
