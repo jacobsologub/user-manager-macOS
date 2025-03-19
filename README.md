@@ -1,12 +1,14 @@
 # macOS User Manager Script
 
-A simple Bash script for managing users on macOS. This script allows you to create new users with optional admin privileges, specify a login shell, and delete existing users, including their home directories. Tested and functional on macOS versions supporting `sysadminctl`.
+A simple Bash script for managing users on macOS. This script allows you to create new users with optional admin privileges, specify a login shell, set up SSH access, update SSH keys for existing users, and delete existing users, including their home directories. Tested and functional on macOS versions supporting `sysadminctl`.
 
 ## Features
-- **Create User**: Prompts for username, full name, password, admin status, and login shell. Automatically assigns a unique UID and creates a home directory.
+- **Create User**: Prompts for username, full name, password, admin status, login shell, and an optional SSH public key. Automatically assigns a unique UID and creates a home directory. If the username already exists, prompts the user to choose another.
+- **Update SSH Keys**: Updates SSH keys for an existing user, with options to replace or append the `authorized_keys` file (appends with a newline for readability).
 - **Delete User**: Prompts for username, confirms deletion, and removes the user along with their home directory.
-- Command-line interface with `create` and `delete` options.
+- Command-line interface with `create`, `delete`, and `update` options.
 - Shell selection from available shells listed in `/etc/shells`, with a default of `/bin/zsh` or the creating user's shell.
+- Optional SSH access setup by providing a public key, creating `~/.ssh/authorized_keys` with correct permissions.
 
 ## Requirements
 - macOS system (tested on macOS versions supporting `sysadminctl`)
@@ -29,6 +31,10 @@ A simple Bash script for managing users on macOS. This script allows you to crea
 * Create a new user:
   ```bash
   sudo ./user_manager_macos.sh create
+
+* Update SSH keys for an existing user:
+  ```bash
+  sudo ./user_manager.sh update ssh
 
 * Delete an existing user:
   ```bash
