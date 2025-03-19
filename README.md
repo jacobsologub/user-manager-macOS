@@ -4,21 +4,17 @@ A simple Bash script for managing users on macOS. This script allows you to crea
 
 ## Features
 - **Create User**: Prompts for username, full name, password, admin status, login shell, and an optional SSH public key. Automatically assigns a unique UID and creates a home directory. If the username already exists, prompts the user to choose another.
-- **Update SSH Keys**: Updates SSH keys for an existing user, with options to replace or append the `authorized_keys` file (appends with a newline for readability).
+- **Update SSH Keys**: Updates SSH keys for an existing user, with options to replace or append the `authorized_keys` file.
 - **Delete User**: Prompts for username, confirms deletion, and removes the user along with their home directory.
-- Command-line interface with `create`, `delete`, and `update` options.
-- Shell selection from available shells listed in `/etc/shells`, with a default of `/bin/zsh` or the creating user's shell.
-- Optional SSH access setup by providing a public key, creating `~/.ssh/authorized_keys` with correct permissions.
 
 ## Requirements
 - macOS system (tested on macOS versions supporting `sysadminctl`)
-- Bash shell (default on macOS)
 - Sudo privileges to run the script
 
 ## Installation
 1. Clone or download this repository:
    ```bash
-   git clone https://github.com/yourusername/user-manager-macos.git
+   git clone https://github.com/jacobsologub/user-manager-macOS
 2. Navigate to the directory:
    ```bash
    cd user-manager-macos;
@@ -27,14 +23,14 @@ A simple Bash script for managing users on macOS. This script allows you to crea
    chmod +x user_manager_macos.sh;
 
 ## Usage
-1. Run the script with sudo privileges and specify either create or delete:
+1. Run the script with sudo privileges:
 * Create a new user:
   ```bash
   sudo ./user_manager_macos.sh create
 
 * Update SSH keys for an existing user:
   ```bash
-  sudo ./user_manager.sh update ssh
+  sudo ./user_manager_macos.sh update ssh
 
 * Delete an existing user:
   ```bash
