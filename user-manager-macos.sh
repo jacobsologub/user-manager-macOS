@@ -21,6 +21,77 @@ check_user_exists() {
     return $?
 }
 
+# Function to manage SSH keys for an existing user
+update_ssh() {
+    echo "=== Update SSH Keys ==="
+
+    # Prompt for username
+    while true; do
+        read -p "Enter username to update SSH keys: " username
+        if ! validate_username "$username"; then
+            continue
+        fi
+        if ! check_user_exists "$username"; then
+            echo "Username '$username' does not exist. Please try another."
+        else
+            break
+        fi
+    done
+
+    # Define paths
+    user_home="/Users/$username"
+    ssh_dir="$user_home/.ssh"
+    authorized_keys="$ssh_dir/authorized_keys"
+
+    read -p "Enter SSH public key to update access for '$username' (or press Enter to skip): " ssh_key
+    if [ -n "$ssh_key" ]; then
+        # Ensure .ssh directory exists
+        mkdir -p "$ssh_dir"
+        chmod 700 "$ssh_dir"
+        chown "$username:staff" "$ssh_dir"
+
+        if [ -f "$authorized_keys" ]; then
+            while true; do
+                read -p "authorized_keys exists. Replace (r), Append (a), or Skip (s)? " action
+                case $action in
+                    [Rr]* )
+                        echo "$ssh_key" > "$authorized_keys"
+                        chmod 600 "$authorized_keys"
+                        chown "$username:staff" "$authorized_keys"
+                        echo "SSH key replaced in authorized_keys for '$username'."
+                        break
+                        ;;
+                    [Aa]* )
+                        # Add a newline before appending the new key
+                        echo "" >> "$authorized_keys"
+                        echo "$ssh_key" >> "$authorized_keys"
+                        chmod 600 "$authorized_keys"
+                        chown "$username:staff" "$authorized_keys"
+                        echo "SSH key appended to authorized_keys for '$username'."
+                        break
+                        ;;
+                    [Ss]* )
+                        echo "SSH key update skipped for '$username'."
+                        break
+                        ;;
+                    * )
+                        echo "Please enter 'r' for replace, 'a' for append, or 's' for skip."
+                        ;;
+                esac
+            done
+        else
+            # Create new authorized_keys if it doesn't exist
+            echo "$ssh_key" > "$authorized_keys"
+            chmod 600 "$authorized_keys"
+            chown "$username:staff" "$authorized_keys"
+            echo "New authorized_keys created for '$username' with provided public key."
+        fi
+    else
+        echo "SSH key update skipped for '$username'."
+    fi
+    echo "SSH key update completed for '$username'."
+}
+
 # Create user function
 create_user() {
     echo "=== New User Creation ==="
@@ -34,7 +105,7 @@ create_user() {
         if check_user_exists "$username"; then
             echo "Username '$username' already exists. Please choose another."
         else
-            break
+            break  # Proceed with new user creation if username is available
         fi
     done
 
@@ -136,7 +207,7 @@ create_user() {
     createhomedir -c -u "$username" > /dev/null
     echo "Home directory created for $username"
 
-    # Prompt for SSH public key (optional)
+    # Prompt for SSH public key (optional) for new user
     read -p "Enter SSH public key to enable SSH access (or press Enter to skip): " ssh_key
     if [ -n "$ssh_key" ]; then
         # Define paths
@@ -213,9 +284,19 @@ case "$1" in
     "delete")
         delete_user
         ;;
+    "update")
+        if [ "$2" = "ssh" ]; then
+            update_ssh
+        else
+            echo "Usage: $0 update {ssh}"
+            echo "Supported update options: ssh"
+            exit 1
+        fi
+        ;;
     *)
-        echo "Usage: $0 {create|delete}"
+        echo "Usage: $0 {create|delete|update}"
         echo "Example: $0 create - to create a new user"
+        echo "Example: $0 update ssh - to update SSH keys for an existing user"
         echo "Example: $0 delete - to delete an existing user"
         exit 1
         ;;
