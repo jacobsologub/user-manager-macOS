@@ -276,6 +276,109 @@ delete_user() {
     echo "User '$username' has been deleted."
 }
 
+# Rename user function
+rename_user() {
+    echo "=== User Rename ==="
+
+    # Prompt for current username
+    while true; do
+        read -p "Enter current username to rename: " old_username
+        if ! validate_username "$old_username"; then
+            continue
+        fi
+        if ! check_user_exists "$old_username"; then
+            echo "Username '$old_username' does not exist. Please try another."
+        else
+            break
+        fi
+    done
+
+    # Prompt for new username
+    while true; do
+        read -p "Enter new username: " new_username
+        if ! validate_username "$new_username"; then
+            continue
+        fi
+        if check_user_exists "$new_username"; then
+            echo "Username '$new_username' already exists. Please choose another."
+        else
+            break
+        fi
+    done
+
+    # Prompt for optional password update
+    password=""
+    read -p "Would you like to update the password for '$new_username'? (y/n): " update_password
+    case $update_password in
+        [Yy]* )
+            while true; do
+                read -s -p "Enter new password: " password
+                echo
+                read -s -p "Confirm new password: " password_confirm
+                echo
+                if [ "$password" != "$password_confirm" ]; then
+                    echo "Passwords do not match. Please try again."
+                elif [ -z "$password" ]; then
+                    echo "Password cannot be empty. Please try again."
+                else
+                    break
+                fi
+            done
+            ;;
+        [Nn]* )
+            echo "Password update skipped."
+            ;;
+        * )
+            echo "Invalid input. Skipping password update."
+            ;;
+    esac
+
+    # Check if user is in admin group
+    is_admin="no"
+    if dscl . -read /Groups/admin GroupMembership | grep -w "$old_username" > /dev/null 2>&1; then
+        is_admin="yes"
+    fi
+
+    # Rename the user using sysadminctl
+    if [ -n "$password" ]; then
+        if ! sysadminctl -rename "$old_username" -newName "$new_username" -password "$password" > /dev/null 2>&1; then
+            echo "Error: Failed to rename user '$old_username' to '$new_username' with new password."
+            exit 1
+        fi
+    else
+        if ! sysadminctl -rename "$old_username" -newName "$new_username" > /dev/null 2>&1; then
+            echo "Error: Failed to rename user '$old_username' to '$new_username'."
+            exit 1
+        fi
+    fi
+
+    # Update admin group membership if applicable
+    if [ "$is_admin" = "yes" ]; then
+        dscl . -delete "/Groups/admin/GroupMembership" "$old_username" > /dev/null 2>&1
+        dscl . -append /Groups/admin GroupMembership "$new_username" > /dev/null 2>&1
+        if [ $? -ne 0 ]; then
+            echo "Warning: Failed to update admin group membership for '$new_username'."
+        fi
+    fi
+
+    # Update home directory
+    old_home="/Users/$old_username"
+    new_home="/Users/$new_username"
+    if [ -d "$old_home" ]; then
+        mv "$old_home" "$new_home"
+        chown -R "$new_username:staff" "$new_home"
+        echo "Home directory renamed from '$old_home' to '$new_home'."
+    else
+        createhomedir -c -u "$new_username" > /dev/null
+        echo "No existing home directory found; created new home directory for '$new_username'."
+    fi
+
+    echo "User '$old_username' successfully renamed to '$new_username'."
+    if [ -n "$password" ]; then
+        echo "Password updated for '$new_username'."
+    fi
+}
+
 # Main script logic
 case "$1" in
     "create")
@@ -293,11 +396,15 @@ case "$1" in
             exit 1
         fi
         ;;
+    "rename")
+        rename_user
+        ;;
     *)
-        echo "Usage: $0 {create|delete|update}"
+        echo "Usage: $0 {create|delete|update|rename}"
         echo "Example: $0 create - to create a new user"
         echo "Example: $0 update ssh - to update SSH keys for an existing user"
         echo "Example: $0 delete - to delete an existing user"
+        echo "Example: $0 rename - to rename an existing user"
         exit 1
         ;;
 esac
