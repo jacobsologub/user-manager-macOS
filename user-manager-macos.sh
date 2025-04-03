@@ -273,6 +273,17 @@ delete_user() {
         fi
     fi
 
+    # Remove home directory if it exists
+    user_home="/Users/$username"
+    if [ -d "$user_home" ]; then
+        rm -rf "$user_home"
+        if [ $? -eq 0 ]; then
+            echo "Home directory '$user_home' removed."
+        else
+            echo "Warning: Failed to remove home directory '$user_home'."
+        fi
+    fi
+
     echo "User '$username' has been deleted."
 }
 
