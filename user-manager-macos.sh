@@ -339,15 +339,24 @@ rename_user() {
         is_admin="yes"
     fi
 
-    # Rename the user using sysadminctl
+    # Get the UID of the old user
+    uid=$(dscl . -read "/Users/$old_username" UniqueID | awk '{print $2}')
+    if [ -z "$uid" ]; then
+        echo "Error: Could not retrieve UID for '$old_username'. Aborting."
+        exit 1
+    fi
+
+    # Rename the user using dscl
+    if ! dscl . -change "/Users/$old_username" RecordName "$old_username" "$new_username"; then
+        echo "Error: Failed to rename user '$old_username' to '$new_username'."
+        exit 1
+    fi
+
+    # Update password if provided
     if [ -n "$password" ]; then
-        if ! sysadminctl -rename "$old_username" -newName "$new_username" -password "$password" > /dev/null 2>&1; then
-            echo "Error: Failed to rename user '$old_username' to '$new_username' with new password."
-            exit 1
-        fi
-    else
-        if ! sysadminctl -rename "$old_username" -newName "$new_username" > /dev/null 2>&1; then
-            echo "Error: Failed to rename user '$old_username' to '$new_username'."
+        if ! sysadminctl -resetPasswordFor "$new_username" -newPassword "$password" > /dev/null 2>&1; then
+            echo "Error: Failed to update password for '$new_username'. Reverting rename."
+            dscl . -change "/Users/$new_username" RecordName "$new_username" "$old_username"
             exit 1
         fi
     fi
@@ -366,7 +375,7 @@ rename_user() {
     new_home="/Users/$new_username"
     if [ -d "$old_home" ]; then
         mv "$old_home" "$new_home"
-        chown -R "$new_username:staff" "$new_home"
+        chown -R "$uid:staff" "$new_home"
         echo "Home directory renamed from '$old_home' to '$new_home'."
     else
         createhomedir -c -u "$new_username" > /dev/null
