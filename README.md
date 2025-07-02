@@ -5,7 +5,9 @@ A simple Bash script for managing users on macOS. This script allows you to crea
 ## Features
 - **Create User**: Prompts for username, full name, password, admin status, login shell, and an optional SSH public key. Automatically assigns a unique UID and creates a home directory. If the username already exists, prompts the user to choose another.
 - **Update SSH Keys**: Updates SSH keys for an existing user, with options to replace or append the `authorized_keys` file.
+- **Update Password**: Securely updates the password for an existing user with confirmation prompt.
 - **Delete User**: Prompts for username, confirms deletion, and removes the user along with their home directory.
+- **Rename User**: Renames an existing user while preserving their data and permissions.
 
 ## Requirements
 - macOS system (tested on macOS versions supporting `sysadminctl`)

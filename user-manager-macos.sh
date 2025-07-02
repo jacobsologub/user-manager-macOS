@@ -92,6 +92,52 @@ update_ssh() {
     echo "SSH key update completed for '$username'."
 }
 
+# Function to update user password
+update_password() {
+    echo "=== Update User Password ==="
+    
+    # Prompt for username
+    while true; do
+        read -p "Enter username to update password: " username
+        if ! validate_username "$username"; then
+            continue
+        fi
+        if ! check_user_exists "$username"; then
+            echo "Username '$username' does not exist. Please try another."
+        else
+            break
+        fi
+    done
+    
+    # Prompt for new password (using -s for silent input)
+    while true; do
+        read -s -p "Enter new password for '$username': " password
+        echo
+        read -s -p "Confirm new password: " password_confirm
+        echo
+        
+        if [ "$password" != "$password_confirm" ]; then
+            echo "Passwords do not match. Please try again."
+            continue
+        fi
+        
+        if [ -z "$password" ]; then
+            echo "Password cannot be empty. Please try again."
+            continue
+        fi
+        
+        break
+    done
+    
+    # Update the password using sysadminctl
+    if sysadminctl -resetPasswordFor "$username" -newPassword "$password" > /dev/null 2>&1; then
+        echo "Password updated successfully for '$username'."
+    else
+        echo "Error: Failed to update password for '$username'."
+        exit 1
+    fi
+}
+
 # Create user function
 create_user() {
     echo "=== New User Creation ==="
@@ -410,9 +456,11 @@ case "$1" in
     "update")
         if [ "$2" = "ssh" ]; then
             update_ssh
+        elif [ "$2" = "password" ]; then
+            update_password
         else
-            echo "Usage: $0 update {ssh}"
-            echo "Supported update options: ssh"
+            echo "Usage: $0 update {ssh|password}"
+            echo "Supported update options: ssh, password"
             exit 1
         fi
         ;;
@@ -423,6 +471,7 @@ case "$1" in
         echo "Usage: $0 {create|delete|update|rename}"
         echo "Example: $0 create - to create a new user"
         echo "Example: $0 update ssh - to update SSH keys for an existing user"
+        echo "Example: $0 update password - to update password for an existing user"
         echo "Example: $0 delete - to delete an existing user"
         echo "Example: $0 rename - to rename an existing user"
         exit 1
