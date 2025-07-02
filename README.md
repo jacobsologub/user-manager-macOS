@@ -34,9 +34,17 @@ A simple Bash script for managing users on macOS. This script allows you to crea
   ```bash
   sudo ./user_manager_macos.sh update ssh
 
+* Update password for an existing user:
+  ```bash
+  sudo ./user_manager_macos.sh update password
+
 * Delete an existing user:
   ```bash
   sudo ./user_manager_macos.sh delete
+
+* Rename an existing user:
+  ```bash
+  sudo ./user_manager_macos.sh rename
 
 [License](https://github.com/jacobsologub/user-manager-macOS/blob/master/LICENSE)
 -------
